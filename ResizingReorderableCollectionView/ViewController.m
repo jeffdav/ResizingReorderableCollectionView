@@ -12,7 +12,10 @@
 
 #import "CellOfLuvCollectionViewCell.h"
 
-@interface ViewController () <UICollectionViewDataSource, LXReorderableCollectionViewDelegateFlowLayout>
+@interface ViewController () <LXReorderableCollectionViewDataSource, LXReorderableCollectionViewDelegateFlowLayout>
+
+@property (nonatomic, strong) NSMutableArray *data;
+@property (nonatomic, strong) NSNumber *movingDatum;
 
 @property (nonatomic, assign) CGFloat scale;
 @property (nonatomic, assign) CGRect originalFrame;
@@ -24,6 +27,12 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+
+    self.data = [NSMutableArray array];
+
+    for (int i = 0; i < [self collectionView:self.collectionView numberOfItemsInSection:0]; ++i) {
+        [self.data addObject:@(i)];
+    }
 
     UICollectionView *collectionView = self.collectionView;
     UICollectionViewFlowLayout *originalLayout = (id)collectionView.collectionViewLayout;
@@ -37,6 +46,8 @@
     reorderableLayout.minimumLineSpacing = originalLayout.minimumLineSpacing;
     reorderableLayout.sectionInset = originalLayout.sectionInset;
     collectionView.collectionViewLayout = reorderableLayout;
+
+    reorderableLayout.scrollingSpeed = 600;
 
     self.scale = 0.5;
     self.originalFrame = self.collectionView.frame;
@@ -55,7 +66,7 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     CellOfLuvCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"CellOfLuv" forIndexPath:indexPath];
-    cell.numberLabel.text = [NSString stringWithFormat:@"%@", @(indexPath.item)];
+    cell.numberLabel.text = [NSString stringWithFormat:@"%@", self.data[indexPath.item]];
     return cell;
 }
 
@@ -73,15 +84,20 @@
 - (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath
 {
     [self shrink];
-
     [collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
 }
 
 - (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath
 {
     [self restore];
-
     [collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
+}
+
+- (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath
+{
+    NSNumber *number = self.data[fromIndexPath.item];
+    [self.data removeObjectAtIndex:fromIndexPath.item];
+    [self.data insertObject:number atIndex:toIndexPath.item];
 }
 
 - (void)shrink
@@ -100,7 +116,6 @@
 
 - (void)restore
 {
-    const CGFloat scale = self.scale;
     const CGPoint center = self.collectionView.center;
 
     [UIView animateWithDuration:0.25 animations:^{
