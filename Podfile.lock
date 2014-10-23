@@ -1,0 +1,14 @@
+PODS:
+  - LXReorderableCollectionViewFlowLayout (0.1.1)
+
+DEPENDENCIES:
+  - LXReorderableCollectionViewFlowLayout (from `https://github.com/jeffahoot/LXReorderableCollectionViewFlowLayout.git`)
+
+EXTERNAL SOURCES:
+  LXReorderableCollectionViewFlowLayout:
+    :git: https://github.com/jeffahoot/LXReorderableCollectionViewFlowLayout.git
+
+SPEC CHECKSUMS:
+  LXReorderableCollectionViewFlowLayout: 9974891a956d330a7b4e98a501323216daeebcae
+
+COCOAPODS: 0.34.4
