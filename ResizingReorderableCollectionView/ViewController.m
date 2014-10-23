@@ -47,9 +47,10 @@
     reorderableLayout.sectionInset = originalLayout.sectionInset;
     collectionView.collectionViewLayout = reorderableLayout;
 
-    reorderableLayout.scrollingSpeed = 600;
+    reorderableLayout.scrollingSpeed = 2400;
+    reorderableLayout.scrollingTriggerEdgeInsets = UIEdgeInsetsMake(100, 100, 100, 100);
 
-    self.scale = 0.5;
+    self.scale = 0.4;
     self.originalFrame = self.collectionView.frame;
 }
 
