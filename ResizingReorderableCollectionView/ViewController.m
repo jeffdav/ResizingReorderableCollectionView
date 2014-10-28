@@ -25,7 +25,7 @@
 
 @implementation ViewController
 
-static const CGFloat ShrunkScale = 0.4;
+static const CGFloat kShrunkScale = 0.4;
 
 static const BOOL kUpdateScaleByChangingExistingCollectionViewLayout = NO;
 static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
@@ -70,10 +70,10 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (self.scale == 1) {
-        [self shrink];
+    if (self.scale == kShrunkScale) {
+         [self restore];
     } else {
-        [self restore];
+        [self shrink];
     }
 
     [collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
@@ -104,7 +104,7 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 
 - (void)shrink
 {
-    self.scale = ShrunkScale;
+    self.scale = kShrunkScale;
 }
 
 - (void)restore
@@ -139,11 +139,10 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 
         self.collectionView.bounds = bounds;
         self.collectionView.center = center;
-
     } completion:nil];
 }
 
-// This method works, but some of animations are janky.
+// This method mostly works, but the animations are janky.
 - (void)updateScaleByChangingExistingCollectionViewLayout
 {
     const CGFloat scale = self.scale;
@@ -159,12 +158,6 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 {
     const CGFloat scale = self.scale;
     LXReorderableCollectionViewFlowLayout *originalLayout = (id)self.collectionViewLayout;
-
-    // LXReorderableCollectionViewFlowLayout doesn't cleanup its gesture recognizers. This is to prevent some of the crashes
-    originalLayout.longPressGestureRecognizer.delegate = nil;
-    originalLayout.panGestureRecognizer.delegate = nil;
-    originalLayout.longPressGestureRecognizer.enabled = NO;
-    originalLayout.panGestureRecognizer.enabled = NO;
 
     LXReorderableCollectionViewFlowLayout *reorderableLayout = [[LXReorderableCollectionViewFlowLayout alloc] init];
 
