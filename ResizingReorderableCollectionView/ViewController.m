@@ -34,19 +34,8 @@
         [self.data addObject:@(i)];
     }
 
-    UICollectionView *collectionView = self.collectionView;
-    UICollectionViewFlowLayout *originalLayout = (id)collectionView.collectionViewLayout;
-    LXReorderableCollectionViewFlowLayout* reorderableLayout = [[LXReorderableCollectionViewFlowLayout alloc] init];
-
-    reorderableLayout.itemSize = originalLayout.itemSize;
-    reorderableLayout.scrollDirection = originalLayout.scrollDirection;
-    reorderableLayout.headerReferenceSize = originalLayout.headerReferenceSize;
-    reorderableLayout.footerReferenceSize = originalLayout.footerReferenceSize;
-    reorderableLayout.minimumInteritemSpacing = originalLayout.minimumInteritemSpacing;
-    reorderableLayout.minimumLineSpacing = originalLayout.minimumLineSpacing;
-    reorderableLayout.sectionInset = originalLayout.sectionInset;
-    collectionView.collectionViewLayout = reorderableLayout;
-
+    LXReorderableCollectionViewFlowLayout *reorderableLayout = (id)self.collectionViewLayout;
+    reorderableLayout.minimumInteritemSpacing = CGFLOAT_MAX;
     reorderableLayout.scrollingSpeed = 2400;
     reorderableLayout.scrollingTriggerEdgeInsets = UIEdgeInsetsMake(100, 100, 100, 100);
 
@@ -84,14 +73,18 @@
 
 - (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout willBeginDraggingItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    [self shrink];
-    [collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
+    if (collectionViewLayout == self.collectionViewLayout) {
+        [self shrink];
+        [collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
+    }
 }
 
 - (void)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout didEndDraggingItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    [self restore];
-    [collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
+    if (collectionViewLayout == self.collectionViewLayout) {
+        [self restore];
+        [collectionView selectItemAtIndexPath:indexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
+    }
 }
 
 - (void)collectionView:(UICollectionView *)collectionView itemAtIndexPath:(NSIndexPath *)fromIndexPath willMoveToIndexPath:(NSIndexPath *)toIndexPath
