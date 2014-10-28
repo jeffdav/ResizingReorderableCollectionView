@@ -24,6 +24,8 @@
 
 @implementation ViewController
 
+static const CGFloat ShrunkScale = 0.4;
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -39,8 +41,9 @@
     reorderableLayout.scrollingSpeed = 2400;
     reorderableLayout.scrollingTriggerEdgeInsets = UIEdgeInsetsMake(100, 100, 100, 100);
 
-    self.scale = 0.4;
     self.originalFrame = self.collectionView.frame;
+
+    _scale = 1;
 }
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
@@ -62,7 +65,7 @@
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    if (CGAffineTransformIsIdentity(collectionView.transform)) {
+    if (self.scale == 1) {
         [self shrink];
     } else {
         [self restore];
@@ -96,27 +99,30 @@
 
 - (void)shrink
 {
-    const CGFloat scale = self.scale;
-    const CGPoint center = self.collectionView.center;
-
-    [UIView animateWithDuration:0.25 animations:^{
-        CGRect frame = self.collectionView.frame;
-        frame.size.width *= 1 / scale;
-        self.collectionView.frame = frame;
-        self.collectionView.center = center;
-        self.collectionView.transform = CGAffineTransformMakeScale(scale, scale);
-    }];
+    self.scale = ShrunkScale;
 }
 
 - (void)restore
 {
+    self.scale = 1;
+}
+
+- (void)setScale:(CGFloat)scale
+{
+    _scale = scale;
+
     const CGPoint center = self.collectionView.center;
 
     [UIView animateWithDuration:0.25 animations:^{
-        self.collectionView.transform = CGAffineTransformIdentity;
-        self.collectionView.frame = self.originalFrame;
+        self.collectionView.transform = CGAffineTransformMakeScale(scale, scale);
+
+        CGRect bounds = self.collectionView.bounds;
+        bounds.size.width = self.originalFrame.size.width / scale;
+
+        self.collectionView.bounds = bounds;
         self.collectionView.center = center;
-    }];
+
+    } completion:nil];
 }
 
 @end
