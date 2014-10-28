@@ -19,12 +19,16 @@
 
 @property (nonatomic, assign) CGFloat scale;
 @property (nonatomic, assign) CGRect originalFrame;
+@property (nonatomic, assign) CGSize originalItemSize;
 
 @end
 
 @implementation ViewController
 
 static const CGFloat ShrunkScale = 0.4;
+
+static const BOOL kUpdateScaleByChangingExistingCollectionViewLayout = NO;
+static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 
 - (void)viewDidLoad
 {
@@ -42,6 +46,7 @@ static const CGFloat ShrunkScale = 0.4;
     reorderableLayout.scrollingTriggerEdgeInsets = UIEdgeInsetsMake(100, 100, 100, 100);
 
     self.originalFrame = self.collectionView.frame;
+    self.originalItemSize = reorderableLayout.itemSize;
 
     _scale = 1;
 }
@@ -111,6 +116,19 @@ static const CGFloat ShrunkScale = 0.4;
 {
     _scale = scale;
 
+    if (kUpdateScaleByChangingExistingCollectionViewLayout) {
+        [self updateScaleByChangingExistingCollectionViewLayout];
+    } else if (kUpdateScaleByCreatingNewCollectionViewLayout) {
+        [self updateScaleByCreatingNewCollectionViewLayout];
+    } else {
+        [self updateScaleUsingTransform];
+    }
+}
+
+// This method works, but some of the cells disappear during animations.
+- (void)updateScaleUsingTransform
+{
+    const CGFloat scale = self.scale;
     const CGPoint center = self.collectionView.center;
 
     [UIView animateWithDuration:0.25 animations:^{
@@ -123,6 +141,44 @@ static const CGFloat ShrunkScale = 0.4;
         self.collectionView.center = center;
 
     } completion:nil];
+}
+
+// This method works, but some of animations are janky.
+- (void)updateScaleByChangingExistingCollectionViewLayout
+{
+    const CGFloat scale = self.scale;
+    LXReorderableCollectionViewFlowLayout *collectionViewLayout = (id)self.collectionViewLayout;
+
+    [self.collectionView performBatchUpdates:^{
+        collectionViewLayout.itemSize = CGSizeMake(self.originalItemSize.width * scale, self.originalItemSize.height * scale);
+    } completion:nil];
+}
+
+// This method doesn't work well due to the fact that LXReorderableCollectionViewFlowLayout has internal state that can't easily be copied to the new layout.
+- (void)updateScaleByCreatingNewCollectionViewLayout
+{
+    const CGFloat scale = self.scale;
+    LXReorderableCollectionViewFlowLayout *originalLayout = (id)self.collectionViewLayout;
+
+    // LXReorderableCollectionViewFlowLayout doesn't cleanup its gesture recognizers. This is to prevent some of the crashes
+    originalLayout.longPressGestureRecognizer.delegate = nil;
+    originalLayout.panGestureRecognizer.delegate = nil;
+    originalLayout.longPressGestureRecognizer.enabled = NO;
+    originalLayout.panGestureRecognizer.enabled = NO;
+
+    LXReorderableCollectionViewFlowLayout *reorderableLayout = [[LXReorderableCollectionViewFlowLayout alloc] init];
+
+    reorderableLayout.itemSize = CGSizeMake(self.originalItemSize.width * scale, self.originalItemSize.height * scale);
+    reorderableLayout.scrollDirection = originalLayout.scrollDirection;
+    reorderableLayout.headerReferenceSize = originalLayout.headerReferenceSize;
+    reorderableLayout.footerReferenceSize = originalLayout.footerReferenceSize;
+    reorderableLayout.minimumInteritemSpacing = originalLayout.minimumInteritemSpacing;
+    reorderableLayout.minimumLineSpacing = originalLayout.minimumLineSpacing;
+    reorderableLayout.sectionInset = originalLayout.sectionInset;
+    reorderableLayout.scrollingSpeed = originalLayout.scrollingSpeed;
+    reorderableLayout.scrollingTriggerEdgeInsets = originalLayout.scrollingTriggerEdgeInsets;
+
+    [self.collectionView setCollectionViewLayout:reorderableLayout animated:YES];
 }
 
 @end
