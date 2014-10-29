@@ -71,7 +71,7 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     if (self.scale == kShrunkScale) {
-         [self restore];
+        [self restore];
     } else {
         [self shrink];
     }
@@ -125,7 +125,6 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
     }
 }
 
-// This method works, but some of the cells disappear during animations.
 - (void)updateScaleUsingTransform
 {
     const CGFloat scale = self.scale;
@@ -135,11 +134,24 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
         self.collectionView.transform = CGAffineTransformMakeScale(scale, scale);
 
         CGRect bounds = self.collectionView.bounds;
-        bounds.size.width = self.originalFrame.size.width / scale;
+        if (scale == 1) {
+            bounds.size.width = self.originalFrame.size.width * 4;
+        } else {
+            bounds.size.width = self.originalFrame.size.width / scale;
+        }
 
         self.collectionView.bounds = bounds;
         self.collectionView.center = center;
-    } completion:nil];
+    } completion:^(BOOL finished) {
+        if (scale == 1) {
+            CGRect bounds = self.collectionView.bounds;
+            bounds.size.width = self.originalFrame.size.width;
+            self.collectionView.bounds = bounds;
+
+            NSIndexPath *indexPath = [[self.collectionView indexPathsForSelectedItems] firstObject];
+            [self.collectionView selectItemAtIndexPath:indexPath animated:NO scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
+        }
+    }];
 }
 
 // This method mostly works, but the animations are janky.
