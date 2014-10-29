@@ -114,38 +114,42 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 
 - (void)setScale:(CGFloat)scale
 {
-    _scale = scale;
-
     if (kUpdateScaleByChangingExistingCollectionViewLayout) {
-        [self updateScaleByChangingExistingCollectionViewLayout];
+        [self updateScaleByChangingExistingCollectionViewLayout:scale];
     } else if (kUpdateScaleByCreatingNewCollectionViewLayout) {
-        [self updateScaleByCreatingNewCollectionViewLayout];
+        [self updateScaleByCreatingNewCollectionViewLayout:scale];
     } else {
-        [self updateScaleUsingTransform];
+        [self updateScaleUsingTransform:scale];
     }
 }
 
-- (void)updateScaleUsingTransform
+- (void)updateScaleUsingTransform:(CGFloat)scale
 {
-    const CGFloat scale = self.scale;
+    const CGFloat oldScale = self.scale;
+
+    _scale = scale;
+
     const CGPoint center = self.collectionView.center;
+    const BOOL isZoomingIn = scale >= oldScale;
 
     [UIView animateWithDuration:0.25 animations:^{
         self.collectionView.transform = CGAffineTransformMakeScale(scale, scale);
 
         CGRect bounds = self.collectionView.bounds;
-        if (scale == 1) {
-            bounds.size.width = self.originalFrame.size.width * 4;
+        if (isZoomingIn) {
+            bounds.size.width = self.originalFrame.size.width / oldScale;
         } else {
             bounds.size.width = self.originalFrame.size.width / scale;
         }
 
         self.collectionView.bounds = bounds;
         self.collectionView.center = center;
+
+        [self.collectionViewLayout invalidateLayoutWithContext:[self.collectionViewLayout invalidationContextForBoundsChange:bounds]];
     } completion:^(BOOL finished) {
-        if (scale == 1) {
+        if (isZoomingIn) {
             CGRect bounds = self.collectionView.bounds;
-            bounds.size.width = self.originalFrame.size.width;
+            bounds.size.width = self.originalFrame.size.width * scale;
             self.collectionView.bounds = bounds;
 
             NSIndexPath *indexPath = [[self.collectionView indexPathsForSelectedItems] firstObject];
@@ -155,9 +159,10 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 }
 
 // This method mostly works, but the animations are janky.
-- (void)updateScaleByChangingExistingCollectionViewLayout
+- (void)updateScaleByChangingExistingCollectionViewLayout:(CGFloat)scale
 {
-    const CGFloat scale = self.scale;
+    _scale = scale;
+
     LXReorderableCollectionViewFlowLayout *collectionViewLayout = (id)self.collectionViewLayout;
 
     [self.collectionView performBatchUpdates:^{
@@ -166,9 +171,10 @@ static const BOOL kUpdateScaleByCreatingNewCollectionViewLayout = NO;
 }
 
 // This method doesn't work well due to the fact that LXReorderableCollectionViewFlowLayout has internal state that can't easily be copied to the new layout.
-- (void)updateScaleByCreatingNewCollectionViewLayout
+- (void)updateScaleByCreatingNewCollectionViewLayout:(CGFloat)scale
 {
-    const CGFloat scale = self.scale;
+    _scale = scale;
+
     LXReorderableCollectionViewFlowLayout *originalLayout = (id)self.collectionViewLayout;
 
     LXReorderableCollectionViewFlowLayout *reorderableLayout = [[LXReorderableCollectionViewFlowLayout alloc] init];
